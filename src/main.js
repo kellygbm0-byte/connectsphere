@@ -1,5 +1,12 @@
 import '../styles.css';
 import { createClient } from '@supabase/supabase-js';
+const SUPABASE_URL = 'https://nmcwcrbtsxkhajwcoesb.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_J-QPuf9C-08pZ0glk7zDcQ_B6jgeasO';
+
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 const A = (id, size=40) => `https://i.pravatar.cc/${size}?img=${id}`;
 const img = (id, w=700) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=82`;
 const state = {
