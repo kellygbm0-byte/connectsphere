@@ -1,4 +1,3 @@
-
 import '../styles.css';
 import { createClient } from '@supabase/supabase-js';
 
@@ -203,7 +202,6 @@ async function loadSavedPosts() {
 
   state.posts = [...savedPosts, ...initialPosts.map(p => ({ ...p }))];
 }
-
 function sidebar() {
   return `<aside class="sidebar">
     <div class="side-card profile-mini">
@@ -421,47 +419,56 @@ function savedPage() {
 }
 
 function settingsPage() {
-  return `<section class="feed"><div class="side-card page-panel"><h1>Settings & privacy ⚙</h1>
-    <p>Manage your account preferences. These controls are a UI demo and are not yet saved to a secure account backend.</p>
-    ${[['Profile visibility', 'Control who can view your profile.'], ['Message requests', 'Choose who can start a conversation.'], ['Notifications', 'Manage alerts and updates.'], ['Account security', 'Set up verification and secure login.']].map((x, i) => `<div style="padding:16px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px">
-      <div class="topic-icon">${['◉', '✉', '♧', '🔒'][i]}</div><div style="flex:1"><strong style="font-size:13px">${x[0]}</strong><p style="margin:4px 0">${x[1]}</p></div>
-      <button class="btn btn-outline" data-toast="This setting requires authenticated backend storage.">Manage</button>
-    </div>`).join('')}
-    <div class="notice">Before launch, add real authentication, server-side authorization, privacy controls, moderation, and account deletion workflows.</div>
-    ${accountStatus()}
-  </div></section>`;
+  return `<section class="feed">
+    <div class="side-card page-panel">
+      <h1>Settings & privacy ⚙</h1>
+      <p>Manage your account preferences.</p>
+
+      ${[['Profile visibility', 'Control who can view your profile.'], ['Message requests', 'Choose who can start a conversation.'], ['Notifications', 'Manage alerts and updates.'], ['Account security', 'Set up verification and secure login.']].map((x, i) => `
+        <div style="padding:16px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px">
+          <div class="topic-icon">${['◉', '✉', '♧', '🔒'][i]}</div>
+          <div style="flex:1">
+            <strong style="font-size:13px">${x[0]}</strong>
+            <p style="margin:4px 0">${x[1]}</p>
+          </div>
+          <button class="btn btn-outline" data-toast="This setting requires authenticated backend storage.">Manage</button>
+        </div>`).join('')}
+
+      <div class="notice" style="margin-top:20px">
+        <strong>Account deletion</strong>
+        <p>This permanently deletes your ConnectSphere authentication account. Other database content is deleted only if your server function or database cascade rules also handle it.</p>
+        ${state.authUser
+          ? '<button class="btn" id="delete-account-button" type="button" style="background:#b42318;color:white">Delete my account</button>'
+          : '<p>Please sign in to access account deletion.</p>'}
+      </div>
+
+      ${accountStatus()}
+    </div>
+  </section>`;
 }
 
-function createPage() {
-  return `<section class="feed"><div class="side-card page-panel"><h1>Create a post ✍️</h1><p>Share an update or idea with your community.</p>${composer()}</div></section>`;
-}
-
-function pageContent() {
+function renderPage() {
   switch (state.page) {
     case 'Home': return homePage();
-    case 'Marketplace': return marketplacePage();
     case 'Discover': return discoverPage();
-    case 'Ideas':
-    case 'Communities': return ideasPage();
     case 'Messages': return messagesPage();
-    case 'Profile': return profilePage();
+    case 'Communities': return ideasPage();
+    case 'Marketplace': return marketplacePage();
     case 'Saved posts': return savedPage();
+    case 'Ideas': return ideasPage();
+    case 'Profile': return profilePage();
     case 'Settings': return settingsPage();
-    case 'Create': return createPage();
     default: return homePage();
   }
 }
 
 function render() {
-  const root = document.getElementById('app');
-  if (!root) return;
+  const app = document.getElementById('app');
+  if (!app) return;
 
-  root.innerHTML = `<div class="app-shell">${header()}<main class="layout">${sidebar()}${pageContent()}${rightColumn()}</main>${mobileNav()}</div>`;
+  app.innerHTML = `${header()}<main class="layout">${sidebar()}${renderPage()}${rightColumn()}</main>${mobileNav()}`;
   bindEvents();
-
-  if (state.page === 'Marketplace') bindProductFilters();
 }
-
 function bindProductFilters() {
   const s = document.getElementById('product-search');
   const c = document.getElementById('product-category');
@@ -713,6 +720,53 @@ function bindEvents() {
         s.value = q;
         s.dispatchEvent(new Event('input'));
       }
+    }
+  });
+
+  // Account deletion requires an exact typed confirmation.
+  document.getElementById('delete-account-button')?.addEventListener('click', async () => {
+    if (!state.authUser) {
+      toast('Please sign in first.');
+      return;
+    }
+
+    const confirmation = window.prompt(
+      'WARNING: This permanently deletes your ConnectSphere account. Type DELETE MY ACCOUNT to continue:'
+    );
+    if (confirmation !== 'DELETE MY ACCOUNT') {
+      toast('Account deletion cancelled.');
+      return;
+    }
+
+    const button = document.getElementById('delete-account-button');
+    if (button) button.disabled = true;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-account', {
+        body: { confirmation: 'DELETE MY ACCOUNT' }
+      });
+      if (error) throw error;
+      if (!data?.success) {
+        throw new Error(data?.error || 'The server did not confirm account deletion.');
+      }
+
+      // The server has confirmed deletion; clear local state even if session
+      // cleanup fails because the account no longer exists.
+      state.authUser = null;
+      try {
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        console.warn('Session cleanup after account deletion:', signOutError);
+      }
+
+      state.page = 'Home';
+      render();
+      toast('Your account deletion was confirmed.');
+    } catch (error) {
+      console.error('Account deletion failed:', error);
+      toast(error.message || 'Could not delete your account. Please try again.');
+      const currentButton = document.getElementById('delete-account-button');
+      if (currentButton) currentButton.disabled = false;
     }
   });
 }
