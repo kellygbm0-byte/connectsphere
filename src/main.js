@@ -330,19 +330,43 @@ function postCard(p) {
   </article>`;
 }
 
+
 function composer() {
   if (!state.authUser) return authPanel();
 
   return `<form class="side-card composer" id="post-form">
-    <div class="composer-top"><img class="avatar" src="${A(11, 80)}" alt="">
-      <input name="post" placeholder="What would you like to share today?" maxlength="800" required aria-label="Create a post">
+    <div class="composer-top">
+      <img class="avatar" src="${A(11, 80)}" alt="">
+      <input name="post"
+        placeholder="What would you like to share today?"
+        maxlength="800"
+        aria-label="Create a post">
     </div>
+
     <div class="composer-tools">
-      <button class="tool-btn" type="button" data-toast="Image upload needs file storage integration.">▧ Photo / Video</button>
-      <button class="tool-btn" type="button" data-page="Ideas">✧ Share an idea</button>
-      <button class="tool-btn" type="button" data-toast="Poll creation can be added to the next release.">▤ Create poll</button>
-      <button class="btn" style="margin-left:auto;padding:8px 15px" type="submit">Publish post ↗</button>
+      <label class="tool-btn" for="post-image" style="cursor:pointer">
+        ▧ Photo / Video
+      </label>
+
+      <input id="post-image" name="image" type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+
+      <button class="tool-btn" type="button" data-page="Ideas">
+        ✧ Share an idea
+      </button>
+
+      <button class="tool-btn" type="button"
+        data-toast="Poll creation can be added to the next release.">
+        ▤ Create poll
+      </button>
+
+      <button class="btn" style="margin-left:auto;padding:8px 15px"
+        type="submit">
+        Publish post ↗
+      </button>
     </div>
+
+    <p id="selected-image-name" style="font-size:12px;margin:8px 0 0"></p>
   </form>`;
 }
 
