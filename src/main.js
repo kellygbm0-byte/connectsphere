@@ -4,9 +4,11 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = 'https://nmcwcrbtsxkhajwcoesb.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_J-QPuf9C-08pZ0glk7zDcQ_B6jgeasO';
 
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+// Temporary session verification
 window.checkConnectSphereSession = async () => {
-  window.checkConnectSphereSession = async () => {
   const { data, error } = await supabase.auth.getSession();
 
   console.log({
@@ -15,7 +17,9 @@ window.checkConnectSphereSession = async () => {
     error: error?.message ?? null
   });
 };
-  window.testConnectSphereFunction = async () => {
+
+// Temporary safe Edge Function test
+window.testConnectSphereFunction = async () => {
   const { data: { session }, error } = await supabase.auth.getSession();
 
   if (error || !session?.access_token) {
@@ -31,14 +35,6 @@ window.checkConnectSphereSession = async () => {
   console.log({
     response: data,
     error: functionError?.message ?? null
-  });
-};
-  const { data, error } = await supabase.auth.getSession();
-
-  console.log({
-    hasSession: Boolean(data?.session),
-    hasUser: Boolean(data?.session?.user),
-    error: error?.message ?? null
   });
 };
 
