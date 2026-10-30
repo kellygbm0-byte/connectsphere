@@ -208,7 +208,7 @@ async function loadSavedPosts() {
 
   const { data, error } = await supabase
     .from('posts')
-    .select('id, user_id, content, created_at')
+.select('id, user_id, content, created_at, image_path')
     .order('created_at', { ascending: false });
 
   if (error) {
