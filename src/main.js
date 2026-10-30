@@ -6,6 +6,33 @@ const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_J-QPuf9C-08pZ0glk7zDcQ_B6jgeasO
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 window.checkConnectSphereSession = async () => {
+  window.checkConnectSphereSession = async () => {
+  const { data, error } = await supabase.auth.getSession();
+
+  console.log({
+    hasSession: Boolean(data?.session),
+    hasUser: Boolean(data?.session?.user),
+    error: error?.message ?? null
+  });
+};
+  window.testConnectSphereFunction = async () => {
+  const { data: { session }, error } = await supabase.auth.getSession();
+
+  if (error || !session?.access_token) {
+    console.log("No valid test session found.");
+    return;
+  }
+
+  const { data, error: functionError } =
+    await supabase.functions.invoke('delete-account', {
+      body: {}
+    });
+
+  console.log({
+    response: data,
+    error: functionError?.message ?? null
+  });
+};
   const { data, error } = await supabase.auth.getSession();
 
   console.log({
