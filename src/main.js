@@ -777,24 +777,7 @@ const uploadedPath = postForm.dataset.uploadedImagePath || null;
     return;
   }
 
-  if (imageFile) {
-    const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/gif'
-    ];
-
-    if (!allowedTypes.includes(imageFile.type)) {
-      toast('Please select a JPG, PNG, WEBP or GIF image.');
-      return;
-    }
-
-    if (imageFile.size > 10 * 1024 * 1024) {
-      toast('Image must not exceed 10 MB.');
-      return;
-    }
-  }
+  
 
   const submitButton = postForm.querySelector('button[type="submit"]');
   if (submitButton) submitButton.disabled = true;
@@ -839,7 +822,7 @@ const uploadedPath = postForm.dataset.uploadedImagePath || null;
       likes: 0,
       comments: 0
     });
-
+delete postForm.dataset.uploadedImagePath;
     state.page = 'Home';
     render();
     toast('Your post was published successfully!');
