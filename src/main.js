@@ -804,28 +804,15 @@ const uploadedPath = postForm.dataset.uploadedImagePath || null;
   try {
     let imageUrl = null;
 
-    if (imageFile) {
-      const safeName = imageFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      uploadedPath = `${state.authUser.id}/${Date.now()}-${safeName}`;
+    if (uploadedPath) {
+  const { data: signedData, error: signedError } = await supabase.storage
+    .from('ConnectSphere_images')
+    .createSignedUrl(uploadedPath, 3600);
 
-      const { error: uploadError } = await supabase.storage
-        .from('ConnectSphere_images')
-        .upload(uploadedPath, imageFile, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: imageFile.type
-        });
+  if (signedError) throw signedError;
 
-      if (uploadError) throw uploadError;
-
-      const { data: signedData, error: signedError } = await supabase.storage
-        .from('ConnectSphere_images')
-        .createSignedUrl(uploadedPath, 3600);
-
-      if (signedError) throw signedError;
-
-      imageUrl = signedData.signedUrl;
-    }
+  imageUrl = signedData.signedUrl;
+}
 
     const { data, error } = await supabase
       .from('posts')
