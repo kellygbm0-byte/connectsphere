@@ -772,7 +772,7 @@ postForm?.addEventListener('submit', async e => {
   const input = postForm.elements.post;
   const content = input.value.trim();
 const uploadedPath = postForm.dataset.uploadedImagePath || null;
-  if (!content && !imageFile) {
+  if (!content && !uploadedPath) {
     toast('Write something or select a photo.');
     return;
   }
