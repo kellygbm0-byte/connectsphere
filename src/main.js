@@ -799,7 +799,7 @@ const uploadedPath = postForm.dataset.uploadedImagePath || null;
   const submitButton = postForm.querySelector('button[type="submit"]');
   if (submitButton) submitButton.disabled = true;
 
-  let uploadedPath = null;
+ 
 
   try {
     let imageUrl = null;
