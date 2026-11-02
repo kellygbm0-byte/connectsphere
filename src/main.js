@@ -690,53 +690,122 @@ function bindEvents() {
 
   document.getElementById('sign-out')?.addEventListener('click', signOut);
 
-  const postForm = document.getElementById('post-form');
-  postForm?.addEventListener('submit', async e => {
-    e.preventDefault();
+  
+const postForm = document.getElementById('post-form');
 
-    if (!state.authUser) {
-      toast('Please sign in before publishing.');
+postForm?.addEventListener('submit', async e => {
+  e.preventDefault();
+
+  if (!state.authUser) {
+    toast('Please sign in before publishing.');
+    return;
+  }
+
+  const input = postForm.elements.post;
+  const content = input.value.trim();
+  const imageFile = postForm.elements.image?.files?.[0] || null;
+
+  if (!content && !imageFile) {
+    toast('Write something or select a photo.');
+    return;
+  }
+
+  if (imageFile) {
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif'
+    ];
+
+    if (!allowedTypes.includes(imageFile.type)) {
+      toast('Please select a JPG, PNG, WEBP or GIF image.');
       return;
     }
 
-    const input = postForm.elements.post;
-    const content = input.value.trim();
-    if (!content) return;
-
-    const submitButton = postForm.querySelector('button[type="submit"]');
-    if (submitButton) submitButton.disabled = true;
-
-    try {
-      const { data, error } = await supabase
-        .from('posts')
-        .insert({ user_id: state.authUser.id, content })
-        .select('id, user_id, content, created_at')
-        .single();
-
-      if (error) throw error;
-
-      state.posts.unshift({
-        id: data.id,
-        userId: data.user_id,
-        name: state.authUser.email || 'You',
-        avatar: A(11),
-        time: new Date(data.created_at).toLocaleString(),
-        verified: false,
-        text: data.content,
-        image: null,
-        likes: 0,
-        comments: 0
-      });
-
-      state.page = 'Home';
-      render();
-      toast('Your post was published successfully!');
-    } catch (error) {
-      console.error('Post publishing failed:', error);
-      toast(error.message || 'Could not publish your post.');
-      if (submitButton) submitButton.disabled = false;
+    if (imageFile.size > 10 * 1024 * 1024) {
+      toast('Image must not exceed 10 MB.');
+      return;
     }
-  });
+  }
+
+  const submitButton = postForm.querySelector('button[type="submit"]');
+  if (submitButton) submitButton.disabled = true;
+
+  let uploadedPath = null;
+
+  try {
+    let imageUrl = null;
+
+    if (imageFile) {
+      const safeName = imageFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      uploadedPath = `${state.authUser.id}/${Date.now()}-${safeName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('ConnectSphere_images')
+        .upload(uploadedPath, imageFile, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: imageFile.type
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from('ConnectSphere_images')
+        .createSignedUrl(uploadedPath, 3600);
+
+      if (signedError) throw signedError;
+
+      imageUrl = signedData.signedUrl;
+    }
+
+    const { data, error } = await supabase
+      .from('posts')
+      .insert({
+        user_id: state.authUser.id,
+        content: content,
+        image_path: uploadedPath
+      })
+      .select('id, user_id, content, created_at, image_path')
+      .single();
+
+    if (error) throw error;
+
+    state.posts.unshift({
+      id: data.id,
+      userId: data.user_id,
+      name: state.authUser.email || 'You',
+      avatar: A(11),
+      time: new Date(data.created_at).toLocaleString(),
+      verified: false,
+      text: data.content,
+      image: imageUrl,
+      imagePath: data.image_path,
+      likes: 0,
+      comments: 0
+    });
+
+    state.page = 'Home';
+    render();
+    toast('Your post was published successfully!');
+
+  } catch (error) {
+    console.error('Post publishing failed:', error);
+
+    if (uploadedPath) {
+      await supabase.storage
+        .from('ConnectSphere_images')
+        .remove([uploadedPath]);
+    }
+
+    toast(error.message || 'Could not publish your post.');
+
+  } finally {
+    if (submitButton) submitButton.disabled = false;
+  }
+});
+
 
   document.getElementById('idea-form')?.addEventListener('submit', e => {
     e.preventDefault();
