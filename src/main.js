@@ -693,6 +693,74 @@ function bindEvents() {
   
 const postForm = document.getElementById('post-form');
 
+const imageInput = document.getElementById('post-image');
+
+imageInput?.addEventListener('change', async () => {
+  const imageFile = imageInput.files?.[0];
+  if (!imageFile || !state.authUser) return;
+
+  const status = document.getElementById('selected-image-name');
+
+  const allowedTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif'
+  ];
+
+  if (!allowedTypes.includes(imageFile.type)) {
+    toast('Please select a JPG, PNG, WEBP or GIF image.');
+    imageInput.value = '';
+    return;
+  }
+
+  if (imageFile.size > 10 * 1024 * 1024) {
+    toast('Image must not exceed 10 MB.');
+    imageInput.value = '';
+    return;
+  }
+
+  if (status) status.textContent = 'Uploading image...';
+
+  imageInput.disabled = true;
+
+  try {
+    const safeName = imageFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+    const imagePath =
+      `${state.authUser.id}/${Date.now()}-${safeName}`;
+
+    const { error } = await supabase.storage
+      .from('ConnectSphere_images')
+      .upload(imagePath, imageFile, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: imageFile.type
+      });
+
+    if (error) throw error;
+
+    postForm.dataset.uploadedImagePath = imagePath;
+
+    if (status) {
+      status.textContent = '✓ Image uploaded successfully. Ready to publish.';
+    }
+
+    toast('Image uploaded successfully!');
+
+  } catch (error) {
+    console.error('Automatic image upload failed:', error);
+    toast(error.message || 'Image upload failed.');
+    imageInput.value = '';
+    delete postForm.dataset.uploadedImagePath;
+
+    if (status) status.textContent = '';
+
+  } finally {
+    imageInput.disabled = false;
+  }
+});
+
 postForm?.addEventListener('submit', async e => {
   e.preventDefault();
 
