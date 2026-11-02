@@ -831,10 +831,10 @@ delete postForm.dataset.uploadedImagePath;
     console.error('Post publishing failed:', error);
 
     if (uploadedPath) {
-      await supabase.storage
-        .from('ConnectSphere_images')
-        .remove([uploadedPath]);
-    }
+  await supabase.storage
+    .from('ConnectSphere_images')
+    .remove([uploadedPath]);
+}
 
     toast(error.message || 'Could not publish your post.');
 
