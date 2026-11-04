@@ -350,7 +350,7 @@ function postCard(p) {
     </div>
     <p class="post-copy">${escapeHTML(p.text).replace(/#([A-Za-z0-9]+)/g, '<span class="tag">#$1</span>')}</p>
     ${p.image ? `<img class="post-image" src="${p.image}" alt="Post image" loading="lazy">` : ''}
-    <div class="post-metrics"><span>💙 ${p.likes + (liked ? 1 : 0)} reactions</span><span>${p.comments + comments.length} comments · 2 shares</span></div>
+    <div class="post-metrics"><span>💙 ${p.likes} reactions</span><span>${p.comments + comments.length} comments · 2 shares</span></div>
     <div class="post-actions">
       <button class="post-action ${liked ? 'liked' : ''}" data-like="${p.id}">${liked ? '♥ Liked' : '♡ Like'}</button>
       <button class="post-action" data-comment="${p.id}">▢ Comment</button>
