@@ -247,6 +247,23 @@ if (likesError) {
     state.liked.add(row.post_id);
   });
 }
+    const { data: allLikeRows, error: countError } = await supabase
+  .from('likes')
+  .select('post_id');
+
+if (countError) {
+  console.error('Could not load reaction totals:', countError.message);
+} else {
+  const likeCounts = {};
+
+  (allLikeRows || []).forEach(row => {
+    likeCounts[row.post_id] = (likeCounts[row.post_id] || 0) + 1;
+  });
+
+  savedPosts.forEach(post => {
+    post.likes = likeCounts[post.id] || 0;
+  });
+}
     return {
       id: p.id,
       isSaved: true,
