@@ -233,7 +233,20 @@ async function loadSavedPosts() {
         imageUrl = signedData.signedUrl;
       }
     }
+const { data: likedRows, error: likesError } = await supabase
+  .from('likes')
+  .select('post_id')
+  .eq('user_id', state.authUser.id);
 
+if (likesError) {
+  console.error('Could not load user likes:', likesError.message);
+} else {
+  state.liked.clear();
+
+  (likedRows || []).forEach(row => {
+    state.liked.add(row.post_id);
+  });
+}
     return {
       id: p.id,
       userId: p.user_id,
