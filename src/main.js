@@ -249,6 +249,7 @@ if (likesError) {
 }
     return {
       id: p.id,
+      isSaved: true,
       userId: p.user_id,
       name: p.user_id === state.authUser.id
         ? (state.authUser.email || 'You')
