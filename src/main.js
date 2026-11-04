@@ -640,27 +640,30 @@ el.disabled = true;
 
 try {
       if (alreadyLiked) {
-        const { error } = await supabase
-          .from('likes')
-          .delete()
-          .eq('post_id', id)
-          .eq('user_id', state.authUser.id);
+  const { error } = await supabase
+    .from('likes')
+    .delete()
+    .eq('post_id', id)
+    .eq('user_id', state.authUser.id);
 
-        if (error) throw error;
+  if (error) throw error;
 
-        state.liked.delete(id);
-      } else {
-        const { error } = await supabase
-          .from('likes')
-          .insert({
-            post_id: id,
-            user_id: state.authUser.id
-          });
+  state.liked.delete(id);
+  post.likes = Math.max(0, post.likes - 1);
 
-        if (error) throw error;
+} else {
+  const { error } = await supabase
+    .from('likes')
+    .insert({
+      post_id: id,
+      user_id: state.authUser.id
+    });
 
-        state.liked.add(id);
-      }
+  if (error) throw error;
+
+  state.liked.add(id);
+  post.likes += 1;
+}
 
       render();
 
