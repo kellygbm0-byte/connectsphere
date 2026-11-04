@@ -217,20 +217,40 @@ async function loadSavedPosts() {
     return;
   }
 
-  const savedPosts = (data || []).map(p => ({
-    id: p.id,
-    userId: p.user_id,
-    name: p.user_id === state.authUser.id
-      ? (state.authUser.email || 'You')
-      : 'ConnectSphere member',
-    avatar: A(11),
-    time: new Date(p.created_at).toLocaleString(),
-    verified: false,
-    text: p.content,
-    image: null,
-    likes: 0,
-    comments: 0
-  }));
+  const savedPosts = await Promise.all(
+  (data || []).map(async p => {
+    let imageUrl = null;
+
+    if (p.image_path) {
+      const { data: signedData, error: signedError } =
+        await supabase.storage
+          .from('ConnectSphere_images')
+          .createSignedUrl(p.image_path, 3600);
+
+      if (signedError) {
+        console.error('Could not retrieve post image:', signedError.message);
+      } else {
+        imageUrl = signedData.signedUrl;
+      }
+    }
+
+    return {
+      id: p.id,
+      userId: p.user_id,
+      name: p.user_id === state.authUser.id
+        ? (state.authUser.email || 'You')
+        : 'ConnectSphere member',
+      avatar: A(11),
+      time: new Date(p.created_at).toLocaleString(),
+      verified: false,
+      text: p.content,
+      image: imageUrl,
+      imagePath: p.image_path,
+      likes: 0,
+      comments: 0
+    };
+  })
+);
 
   state.posts = [...savedPosts, ...initialPosts.map(p => ({ ...p }))];
 }
