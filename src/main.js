@@ -595,14 +595,52 @@ function bindEvents() {
     el.addEventListener('click', () => toast(el.dataset.toast));
   });
 
-  document.querySelectorAll('[data-like]').forEach(el => {
-    el.addEventListener('click', () => {
-      const id = el.dataset.like;
-      state.liked.has(id) ? state.liked.delete(id) : state.liked.add(id);
-      render();
-    });
-  });
+ document.querySelectorAll('[data-like]').forEach(el => {
+  el.addEventListener('click', async () => {
+    const id = el.dataset.like;
 
+    if (!state.authUser) {
+      toast('Please sign in to like a post.');
+      return;
+    }
+
+    const alreadyLiked = state.liked.has(id);
+
+    el.disabled = true;
+
+    try {
+      if (alreadyLiked) {
+        const { error } = await supabase
+          .from('likes')
+          .delete()
+          .eq('post_id', id)
+          .eq('user_id', state.authUser.id);
+
+        if (error) throw error;
+
+        state.liked.delete(id);
+      } else {
+        const { error } = await supabase
+          .from('likes')
+          .insert({
+            post_id: id,
+            user_id: state.authUser.id
+          });
+
+        if (error) throw error;
+
+        state.liked.add(id);
+      }
+
+      render();
+
+    } catch (error) {
+      console.error('Like update failed:', error);
+      toast(error.message || 'Could not update like. Please try again.');
+      el.disabled = false;
+    }
+  });
+});
   document.querySelectorAll('[data-save]').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.dataset.save;
