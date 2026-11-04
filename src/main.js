@@ -605,11 +605,23 @@ function bindEvents() {
       return;
     }
 
-    const alreadyLiked = state.liked.has(id);
+   const post = state.posts.find(p => String(p.id) === String(id));
 
-    el.disabled = true;
+if (!post) {
+  toast('Post not found.');
+  return;
+}
 
-    try {
+if (!post.isSaved) {
+  toast('Likes on demo posts are not saved yet.');
+  return;
+}
+
+const alreadyLiked = state.liked.has(id);
+
+el.disabled = true;
+
+try {
       if (alreadyLiked) {
         const { error } = await supabase
           .from('likes')
