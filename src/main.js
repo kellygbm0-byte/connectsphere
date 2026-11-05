@@ -630,12 +630,21 @@ if (!post) {
 }
 
 if (!post.isSaved) {
-  toast('Likes on demo posts are not saved yet.');
+  const alreadyLiked = state.liked.has(id);
+
+  if (alreadyLiked) {
+    state.liked.delete(id);
+    post.likes = Math.max(0, Number(post.likes || 0) - 1);
+  } else {
+    state.liked.add(id);
+    post.likes = Number(post.likes || 0) + 1;
+  }
+
+  render();
   return;
 }
 
 const alreadyLiked = state.liked.has(id);
-
 el.disabled = true;
 
 try {
